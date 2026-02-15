@@ -37,7 +37,7 @@
 
     /* ── 전체화면 상단 바 ── */
     #fs-topbar {
-      display: none;
+      display: flex;
       position: fixed;
       top: 0; left: 0; right: 0;
       height: 44px;
@@ -230,9 +230,9 @@
       display: flex;
       max-width: 1200px;
       margin: 0 auto;
-      gap: 24px;
-        min-height: calc(100vh - 48px); /* 상단바 높이만큼 빼기 */
+  min-height: calc(100vh - 48px); /* 상단바 높이만큼 빼기 */
   align-items: center;
+      gap: 24px;
     }
     .ds-left {
       width: 240px;
@@ -362,8 +362,17 @@
     #ds-desc { font-family: 'Pretendard', sans-serif; color: #444; font-size: 14px; }
     #ds-link { font-family: 'Pretendard', sans-serif; font-weight: 500; margin-top: -30px; margin-right: -15px; }
     #ds-preview {
-      width: 380px; height: 260px; position: absolute;
-      bottom: 60px; left: 50%;  transform: translateX(-50%); background: #aaa; border-radius: 10px;
+      width: 380px;
+  height: 260px;
+
+  position: absolute;
+  bottom: 60px;
+
+  left: 50%;
+  transform: translateX(-50%);
+
+  background: #aaa;
+  border-radius: 10px;
     }
     .ds-keyboard-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
     .ds-keyboard-buttons-wrapper { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 10px 0; }
@@ -476,10 +485,10 @@
 <div id="fs-topbar">
   <div class="fs-hint">
     <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Alt</kbd> 조합 후 문자 키 입력
-    &nbsp;|&nbsp; 전체화면 종료 : <kbd>ESC</kbd>
+    &nbsp;|&nbsp; 전체화면 종료: <kbd>ESC</kbd>
   </div>
-  <button id="fs-exit-btn" onclick="exitFullscreen()">
-    ⛶ 전체화면 나가기
+  <button id="fs-exit-btn" onclick="toggleFullscreen()">
+    🖥 전체화면으로 보기
   </button>
 </div>
 
@@ -623,17 +632,21 @@
 document.addEventListener('keydown', function(e) {
   const key = e.key.toLowerCase();
   const isFKey = /^f\d+$/.test(key); // f1, f2 ... f12
-  
-  // Ctrl/Alt/Meta 조합은 항상 차단
+
+  // ✅ Tab은 기본 동작(포커스 이동/컨트롤 이동)을 막아야 입력이 유지됨
+  // (Ctrl+Tab은 브라우저 탭 전환이라 일부 브라우저/환경에서는 완전히 막히지 않을 수 있음)
+  if (key === "tab") {
+    e.preventDefault();
+  }
+
+  // Ctrl/Alt/Meta 조합은 브라우저 기본 동작만 차단
   if (e.ctrlKey || e.altKey || e.metaKey) {
     e.preventDefault();
-    return;
   }
-  
-  // ✅ Shift+F5는 브라우저 강제 새로고침이므로 차단하되, 퀴즈 로직으로는 전달
-  // preventDefault만 하고 이벤트는 계속 전파 (stopPropagation 없음)
+
+  // F키(F1~F12)도 브라우저 기본 동작만 차단
   if (isFKey) {
-    e.preventDefault(); // 브라우저 기본 동작만 차단
+    e.preventDefault();
   }
 }, true);
 
@@ -642,34 +655,55 @@ document.addEventListener('keydown', function(e) {
 // ══════════════════════════════════════════════
 function enterFullscreen() {
   const el = document.documentElement;
-  if (el.requestFullscreen) el.requestFullscreen();
-  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  // 사용자 제스처(버튼 클릭)에서만 동작합니다.
+  const req = el.requestFullscreen ? el.requestFullscreen()
+            : (el.webkitRequestFullscreen ? el.webkitRequestFullscreen() : null);
+
+  // 일부 브라우저는 Promise를 반환하므로 안전하게 처리
+  if (req && typeof req.catch === "function") req.catch(() => {});
   document.getElementById('fullscreen-overlay').classList.add('hidden');
 }
 
 function exitFullscreen() {
-  if (document.exitFullscreen) document.exitFullscreen();
-  else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  const ex = document.exitFullscreen ? document.exitFullscreen()
+           : (document.webkitExitFullscreen ? document.webkitExitFullscreen() : null);
+
+  if (ex && typeof ex.catch === "function") ex.catch(() => {});
+}
+
+function toggleFullscreen() {
+  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+  if (isFs) exitFullscreen();
+  else enterFullscreen();
 }
 
 function skipFullscreen() {
   document.getElementById('fullscreen-overlay').classList.add('hidden');
 }
 
+// ✅ 상단바는 항상 유지하고, 버튼/패딩만 모드에 맞게 전환
 function updateFullscreenUI(isFs) {
   const topbar = document.getElementById('fs-topbar');
+  const btn = document.getElementById('fs-exit-btn');
+
+  // topbar는 항상 보이도록(섹션 유지)
+  topbar.classList.add('visible');
+
   if (isFs) {
     document.getElementById('fullscreen-overlay').classList.add('hidden');
-    topbar.classList.add('visible');
     document.body.classList.add('fullscreen-mode');
+    btn.innerHTML = "⛶ 전체화면 나가기";
   } else {
-    topbar.classList.remove('visible');
     document.body.classList.remove('fullscreen-mode');
+    btn.innerHTML = "🖥 전체화면으로 보기";
   }
 }
 
 document.addEventListener('fullscreenchange', () => updateFullscreenUI(!!document.fullscreenElement));
 document.addEventListener('webkitfullscreenchange', () => updateFullscreenUI(!!document.webkitFullscreenElement));
+
+// 초기 상태 동기화
+updateFullscreenUI(!!(document.fullscreenElement || document.webkitFullscreenElement));
 
 // ══════════════════════════════════════════════
 // PWA 설치 배너
@@ -711,7 +745,7 @@ let isAnswerShown = false;
 let isInputLocked = false;
 
 const restrictedKeys = new Set([
-  "capslock", "contextmenu", "backspace", "escape", "home", "end", "pagedown", "pageup",
+   "capslock", "contextmenu", "backspace", "escape", "home", "end", "pagedown", "pageup",
   "enter", "delete", "arrowup", "arrowdown", "arrowleft", "arrowright"
   // F1~F12는 제거 - 단축키 문제로 사용 가능하도록
 ]);
