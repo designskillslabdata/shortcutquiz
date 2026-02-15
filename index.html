@@ -1585,11 +1585,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const themeBtn = document.getElementById("ds-theme-toggle");
     const savedTheme = localStorage.getItem("ds-theme");
 
-    if (savedTheme === "dark") {
-      document.body.classList.add("dark");
-    } else if (!savedTheme && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-      document.body.classList.add("dark");
-    }
+// ✅ 처음(저장값 없음)은 무조건 라이트
+document.body.classList.remove("dark");
+
+// ✅ 사용자가 저장해둔 값이 있으면 그 값만 반영
+if (savedTheme === "dark") {
+  document.body.classList.add("dark");
+}
 
     function syncThemeToggleUI() {
       const isDark = document.body.classList.contains("dark");
