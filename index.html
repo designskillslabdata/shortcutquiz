@@ -82,7 +82,231 @@
       white-space: nowrap;
       transition: all 0.2s;
     }
-    #fs-exit-btn:hover { background: #f5f5f5; border-color: #bbb; }
+    
+    /* ✅ fs-topbar 오른쪽 액션(전체화면 + 테마) */
+    .fs-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    /* ✅ 쌈뽕 테마 토글 버튼 */
+    #ds-theme-toggle{
+      position:relative;
+  width:60px;
+  height:30px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,0.12);
+  background: linear-gradient(135deg, rgba(62,100,255,0.22), rgba(255, 180, 60, 0.22));
+  backdrop-filter: blur(10px);
+  cursor:pointer;
+  padding:3px;
+  overflow:hidden;
+  transition: transform .15s ease, border-color .2s ease, background .2s ease;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  font-family: 'Pretendard', sans-serif;
+    }
+    #ds-theme-toggle:hover{ transform: translateY(-1px); }
+    #ds-theme-toggle:active{ transform: translateY(0px) scale(0.99); }
+    #ds-theme-toggle:focus-visible{
+      outline: 3px solid rgba(62,100,255,0.35);
+      outline-offset: 2px;
+    }
+
+    #ds-theme-toggle .theme-icon{
+      position:absolute;
+  top:15%;
+  transform: translateY(-50%);
+  z-index:2;
+
+  width:22px;
+  height:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+
+  opacity:0.85;
+  user-select:none;
+  pointer-events:none;
+  transition: opacity .2s ease, transform .2s ease;
+    }
+#ds-theme-toggle .theme-sun{ left:3px; }
+#ds-theme-toggle .theme-moon{ right:5px; }
+
+    #ds-theme-toggle .theme-thumb{
+       position:absolute;
+  top:50%;
+  left:2px;
+  transform: translate(0, -50%);
+  width:24px;
+  height:24px;
+  border-radius:999px;
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+  z-index:1;
+  transition: transform .22s cubic-bezier(.2,.9,.2,1), background .2s ease;
+    }
+
+    /* ✅ 다크 모드 색상 오버라이드(최소한으로) */
+    body.dark{
+      background:#0f1115;
+      color:#e7eaf0;
+    }
+    body.dark #fs-topbar{
+      background: rgba(16,18,24,0.86);
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+    }
+    body.dark #fs-exit-btn{
+      border-color: rgba(255,255,255,0.16);
+      color:#e7eaf0;
+      background: rgba(255,255,255,0.04);
+    }
+    body.dark #ds-theme-toggle{
+      border-color: rgba(255,255,255,0.16);
+      background: linear-gradient(135deg, rgba(90, 120, 255, 0.28), rgba(120, 80, 255, 0.22));
+      box-shadow: 0 10px 26px rgba(0,0,0,0.28);
+    }
+    body.dark #ds-theme-toggle .theme-thumb{
+background: rgba(255,255,255,0.04);
+      transform: translate(44px, -50%);
+    }
+    body.dark #ds-theme-toggle .theme-sun{ opacity:0.35; transform: scale(0.95); }
+    body.dark #ds-theme-toggle .theme-moon{ opacity:0.95; transform: scale(1.05); }
+
+    body.dark .ds-panel,
+    body.dark .ds-keyboard-panel,
+    body.dark .ds-problem-panel,
+    body.dark .overlay-card{
+      background: #161a22 !important;
+      color: #e7eaf0 !important;
+      border-color: rgba(255,255,255,0.10) !important;
+      box-shadow: none !important;
+    }
+    body.dark .ds-key-btn{
+      background: rgba(255,255,255,0.08) !important;
+      color: #e7eaf0 !important;
+      border-color: rgba(255,255,255,0.14) !important;
+    }
+    body.dark .ds-key-btn:hover{
+      background: rgba(255,255,255,0.11) !important;
+    }
+    body.dark input,
+    body.dark textarea,
+    body.dark select{
+      background:#0f1115 !important;
+      color:#e7eaf0 !important;
+      border-color: rgba(255,255,255,0.18) !important;
+    }
+
+    /* thumb 이동 */
+    body.dark #ds-theme-toggle .theme-thumb{
+      transform: translateX(44px);
+    }
+    body:not(.dark) #ds-theme-toggle .theme-sun{ opacity:0.95; transform: scale(1.05); }
+    body:not(.dark) #ds-theme-toggle .theme-moon{ opacity:0.35; transform: scale(0.95); }
+
+    /* ✅ Dark mode 추가 튜닝: 좌측 카테고리/버튼/키보드 대비 강화 */
+    body.dark .ds-left{
+      background:#12151c !important;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    body.dark .ds-left .ds-panel{
+      background: transparent !important;
+    }
+    body.dark #selected-tool-name,
+    body.dark .ds-tool-btn{
+      color:#e7eaf0 !important;
+    }
+    body.dark .ds-tool-btn{
+      background: rgba(255,255,255,0) !important;
+      border-color: rgba(255,255,255,0.10) !important;
+    }
+    body.dark .ds-tool-btn:hover{
+      background: rgba(255,255,255,0.08) !important;
+    }
+    body.dark .ds-arrow-icon{ stroke: rgba(231,234,240,0.75) !important; }
+    body.dark #ds-category-arrow{ stroke: rgba(231,234,240,0.75) !important; }
+    body.dark #ds-sub-categories::before{ background-color: rgba(255,255,255,0.12) !important; }
+
+    /* 카테고리 버튼 텍스트 밝게 + 활성 배경 조정 */
+    body.dark .ds-topcat-btn,
+    body.dark .ds-subcat-btn{
+      color:#e7eaf0 !important;
+    }
+    body.dark .ds-topcat-btn .title{ color:#eef1f7 !important; }
+    body.dark .ds-topcat-count{ color: rgba(231,234,240,0.65) !important; }
+    body.dark .ds-subcat-btn .subcat-label{ color:#e7eaf0 !important; }
+    body.dark .ds-topcat-btn:hover,
+    body.dark .ds-subcat-btn:hover{
+      background: rgba(255,255,255,0.06) !important;
+    }
+    body.dark .ds-topcat-btn.active{
+      background: rgba(62,100,255,0.22) !important;
+      color:#f2f5ff !important;
+    }
+    body.dark .ds-subcat-btn.active{
+      background: rgba(62,100,255,0.18) !important;
+      color:#f2f5ff !important;
+    }
+
+    /* 버전 텍스트/팝업 대비 */
+    body.dark .ds-version-text{
+      background: rgba(255,255,255,0.05) !important;
+      color: rgba(231,234,240,0.75) !important;
+      border-top: 1px solid rgba(255,255,255,0.10) !important;
+    }
+    body.dark #ds-version-popup{
+      background:#161a22 !important;
+      color:#e7eaf0 !important;
+      border-color: rgba(255,255,255,0.12) !important;
+    }
+
+    /* 정답 보기/다음 버튼 대비 */
+    body.dark .ds-answer-footer,
+    body.dark .ds-panel-question .ds-answer-footer{
+      border-top: 1px solid rgba(255,255,255,0.12) !important;
+    }
+    body.dark .ds-answer-btn,
+    body.dark .ds-panel-question .ds-answer-btn{
+      color:#e7eaf0 !important;
+    }
+    body.dark .ds-answer-btn.left{
+      border-right: 1px solid rgba(255,255,255,0.12) !important;
+    }
+    body.dark .ds-answer-btn:hover,
+    body.dark .ds-panel-question .ds-answer-btn:hover{
+      background: rgba(255,255,255,0.06) !important;
+    }
+
+    /* 키보드 버튼: 기본을 더 밝게, active/hover 파란 기운 강화 */
+    body.dark .ds-key-btn{
+      background: rgba(255,255,255,0) !important;
+      border-color: rgba(255,255,255,0.18) !important;
+      color:#eef1f7 !important;
+    }
+    body.dark .ds-key-btn:hover{
+      background: rgba(255,255,255,0.16) !important;
+      border-color: rgba(255,255,255,0.22) !important;
+    }
+    body.dark .ds-key-btn.active{
+      background: rgba(62,100,255,0.30) !important;
+      border-color: rgba(62,100,255,0.55) !important;
+      color:#f4f6ff !important;
+      font-weight: 600;
+      outline: none !important;
+    }
+
+    /* 키보드 디스플레이/힌트 텍스트 */
+    body.dark #ds-keyboard-display{
+      color:#eef1f7 !important;
+    }
+    body.dark .ds-keyboard-hint,
+    body.dark #ds-keyboard-hint{
+      color: rgba(231,234,240,0.65) !important;
+    }
+
+#fs-exit-btn:hover { background: #f5f5f5; border-color: #bbb; }
     body.fullscreen-mode { padding-top: 56px; }
 
     /* ── PWA 설치 배너 ── */
@@ -378,6 +602,10 @@
     .ds-keyboard-buttons-wrapper { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 10px 0; }
     .ds-keyboard-column { display: flex; flex-direction: column; gap: 12px; }
     .ds-keyboard-button-row { display: flex; gap: 12px; }
+
+    /* ✅ Mac 모드에서 Ctrl/Option/Cmd 3버튼 배치용 */
+    #ds-bottom-row { display:flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
     .ds-divider { width: 1.4px; height: 100%; background-color: #eee; margin: 0 20px; }
     .ds-keyboard-title { font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 14px; }
     .ds-key-btn {
@@ -477,7 +705,44 @@
     @media (max-width: 980px) {
       #ds-preview { position: static; display: block; margin: 16px auto 0; max-width: 100%; height: auto; aspect-ratio: 400 / 260; }
     }
-  </style>
+  
+    /* ✅ Dark mode 추가 튜닝(2): 키보드 우측 디스플레이/설명/드롭다운 톤 조정 */
+    body.dark .ds-keyboard-display{
+      background: rgba(81,81,81,0) !important; /* 기존 흰색보다 톤 다운 */
+      border-color: rgba(255,255,255,0.35) !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.18) !important;
+    }
+    body.dark #ds-keyboard-display{
+      color: #fff !important; /* 입력 글자 더 어둡게 */
+      text-shadow: none !important;
+    }
+
+    body.dark #ds-desc{
+      color: rgba(231,234,240,0.78) !important; /* 설명문 더 밝게 */
+    }
+
+    body.dark .ds-tool-dropdown{
+      background: #12151c !important; /* 드롭다운 박스 톤 다운 */
+      border-color: rgba(255,255,255,0.10) !important;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.45) !important;
+    }
+    body.dark .ds-tool-dropdown li,
+    body.dark .ds-tool-dropdown .ds-tool-item{
+      color: rgba(231,234,240,0.92) !important;
+    }
+    body.dark .ds-tool-dropdown li:hover,
+    body.dark .ds-tool-dropdown .ds-tool-item:hover{
+      background: rgba(255,255,255,0.06) !important;
+    }
+body.dark .ds-tool-dropdown li.selected{
+  background-color: transparent !important;     /* ← 흰 배경 제거 */
+  color: rgba(231,234,240,0.95) !important;
+}
+body.dark .ds-subcat-btn img.icon {
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+}
+</style>
 </head>
 <body>
 
@@ -487,9 +752,19 @@
     <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Alt</kbd> 조합 후 문자 키 입력
     &nbsp;|&nbsp; 전체화면 종료: <kbd>ESC</kbd>
   </div>
-  <button id="fs-exit-btn" onclick="toggleFullscreen()">
-    🖥 전체화면으로 보기
+  <div class="fs-actions">
+  
+  <!-- ✅ 테마 토글(라이트/다크) -->
+  <button id="ds-theme-toggle" type="button" aria-pressed="false" title="다크모드 전환">
+    <span class="theme-icon theme-sun">☀️</span>
+    <span class="theme-icon theme-moon">🌙</span>
+    <span class="theme-thumb" aria-hidden="true"></span>
   </button>
+
+  <button id="fs-exit-btn" onclick="toggleFullscreen()">
+🖥 전체화면으로 보기
+  </button>
+</div>
 </div>
 
 <!-- 전체화면 안내 오버레이 -->
@@ -606,6 +881,11 @@
         </div>
         <div id="ds-keyboard-hint" class="ds-keyboard-hint">
           조합형 단축키는 버튼을 클릭한 후 키를 입력해주세요.
+    // ✅ Mac + F1~F12 문제일 때 fn 안내 문구 추가
+    if (osMode === "mac" && hasFunctionKey(currentAnswerKeys)) {
+      infoText.innerHTML += "<br>맥북이나 노트북 등 F1~F12 특수키가 있는 경우 fn키를 함께 눌러주세요.";
+    }
+
         </div>
       </div>
 
@@ -777,21 +1057,59 @@ const iconMap = {
   arrange: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/7e8a684a31a2a.png",
 };
 
-function normalizeKey(k) {
-  const lower = k.toLowerCase();
-  if (osMode === "mac" && lower === "meta") return "control";
-  return lower;
+// ✅ 데이터(문제은행) 단축키 토큰을 실제 키로 해석
+// - Windows 기준 데이터: "control" = Ctrl
+// - Mac 모드에서는 기본적으로 "control"을 Cmd(meta)로 해석
+// - Mac에서 실제 Control 키를 쓰고 싶으면 데이터에 "ctrl"을 사용
+function resolveShortcutToken(token) {
+  const t = String(token).toLowerCase();
+
+  if (osMode === "mac") {
+    if (t === "control") return "meta";  // 기본: Windows Ctrl → Mac Cmd
+    if (t === "ctrl") return "control"; // 예외: Mac Control
+    if (t === "cmd") return "meta";
+    if (t === "option") return "alt";
+    return t;
+  } else {
+    // Windows
+    if (t === "ctrl") return "control";
+    if (t === "cmd") return "control"; // (윈도우에는 Cmd가 없으니 Ctrl로 취급)
+    return t;
+  }
 }
 
-function mapDisplayKey(k) {
-  const lower = k.toLowerCase();
-  if (osMode === "mac") {
-    if (lower === "control" || lower === "meta") return "Cmd";
-    if (lower === "alt") return "Option";
-  } else {
-    if (lower === "control") return "Ctrl";
+// ✅ 현재 OS 모드에서 사용할 단축키 배열을 선택
+// - 기본: problem.shortcut
+// - Mac 전용 예외가 필요하면 문제은행에 한 줄 추가: "shortcutMac": ["ctrl","tab"]
+function getActiveShortcut(problem) {
+  if (!problem || !problem.shortcut) return [];
+  if (osMode === "mac" && Array.isArray(problem.shortcutMac) && problem.shortcutMac.length) {
+    return problem.shortcutMac;
   }
-  return k.charAt(0).toUpperCase() + k.slice(1).toLowerCase();
+  return problem.shortcut;
+}
+
+
+// ✅ 사용자가 실제로 누른 키는 그대로 저장(스왑 금지)
+function normalizeKey(k) {
+  return String(k).toLowerCase();
+}
+
+// ✅ 화면 표시용 텍스트
+function mapDisplayKey(k) {
+  const t = String(k).toLowerCase();
+  if (osMode === "mac") {
+    if (t === "meta") return "Cmd";
+    if (t === "control") return "Ctrl";
+    if (t === "alt") return "Option";
+    if (t === "shift") return "Shift";
+    return t.toUpperCase();
+  } else {
+    if (t === "control") return "Ctrl";
+    if (t === "alt") return "Alt";
+    if (t === "shift") return "Shift";
+    return t.toUpperCase();
+  }
 }
 
 async function loadProblems(jsonPath = "https://raw.githubusercontent.com/designskillslabdata/designslab/main/phshortcuts.json") {
@@ -994,8 +1312,11 @@ function indicateKeyResult(isCorrect) {
 }
 
 function showAnswer() {
-  if (!currentProblem || !currentProblem.shortcut) return;
-  const answerText = currentProblem.shortcut.map(mapDisplayKey).join(" + ");
+  if (!currentProblem || getActiveShortcut(currentProblem).length === 0) return;
+
+  // ✅ 토큰을 OS에 맞게 해석한 뒤 표시
+  const resolved = getActiveShortcut(currentProblem).map(resolveShortcutToken);
+  const answerText = resolved.map(mapDisplayKey).join(" + ");
   const answerBtn = document.querySelector(".ds-answer-btn.left");
   if (!answerBtn) return;
   const keyDisplay = document.getElementById("ds-keyboard-display");
@@ -1005,15 +1326,11 @@ function showAnswer() {
     pressedKeys.clear();
     document.querySelectorAll('.ds-key-btn').forEach(b => b.classList.remove("active", "highlight"));
     const modifiers = ["control", "shift", "alt", "meta"];
-    currentProblem.shortcut.forEach(k => {
-      const key = k.toLowerCase();
-      let displayKey = key;
-      if (osMode === "mac") {
-        if (key === "control") displayKey = "meta";
-      }
+    resolved.forEach(k => {
+      const key = String(k).toLowerCase();
       if (modifiers.includes(key)) {
-        const btn = document.querySelector(`.ds-key-btn[data-key='${displayKey}']`);
-        if (btn) { btn.classList.add("active", "highlight"); pressedKeys.add(displayKey); }
+        const btn = document.querySelector(`.ds-key-btn[data-key='${key}']`);
+        if (btn) { btn.classList.add("active", "highlight"); pressedKeys.add(key); }
       } else {
         keyDisplay.textContent = key.toUpperCase();
         keyDisplay.classList.add("highlight");
@@ -1030,9 +1347,12 @@ function showAnswer() {
 }
 
 function checkAnswer() {
-  if (!currentProblem || !currentProblem.shortcut || isInputLocked) return;
+  if (!currentProblem || getActiveShortcut(currentProblem).length === 0 || isInputLocked) return;
+
   const userInput = Array.from(pressedKeys).map(normalizeKey).sort();
-  const answer = currentProblem.shortcut.map(k => k.toLowerCase()).sort();
+
+  // ✅ OS에 맞게 정답 토큰 해석
+  const answer = getActiveShortcut(currentProblem).map(resolveShortcutToken).map(k => String(k).toLowerCase()).sort();
   if (userInput.length < answer.length) return;
   const correct = JSON.stringify(userInput) === JSON.stringify(answer);
 
@@ -1093,18 +1413,57 @@ function updateKeyLabels() {
   const altBtn = document.getElementById("btn-alt");
   const osText = document.getElementById("ds-os-mode");
   const bottomRow = document.getElementById("ds-bottom-row");
+
+  // ✅ 공통: 클릭 토글 핸들러(동적으로 만든 버튼에도 적용)
+  const bindKeyBtn = (btn) => {
+    if (!btn || btn.dataset.bound === "1") return;
+    btn.dataset.bound = "1";
+    btn.addEventListener("click", () => {
+      const k = btn.dataset.key.toLowerCase();
+      if (pressedKeys.has(k)) { pressedKeys.delete(k); btn.classList.remove("active"); }
+      else { pressedKeys.add(k); btn.classList.add("active"); }
+      checkAnswer();
+    });
+  };
+
+  // Cmd 버튼(없으면 생성)
+  let cmdBtn = document.getElementById("btn-cmd");
+  if (!cmdBtn) {
+    cmdBtn = document.createElement("button");
+    cmdBtn.className = "ds-key-btn btn-size-ctrl"; // 폭은 Ctrl과 비슷하게
+    cmdBtn.id = "btn-cmd";
+    cmdBtn.dataset.key = "meta";
+    cmdBtn.textContent = "Cmd";
+  }
+
   if (osMode === "mac") {
-    ctrlBtn.textContent = "Cmd"; ctrlBtn.dataset.key = "meta";
+    // ✅ Mac: Ctrl / Option / Cmd (세 버튼)
+    ctrlBtn.textContent = "Ctrl"; ctrlBtn.dataset.key = "control";
     altBtn.textContent = "Option"; altBtn.dataset.key = "alt";
+    cmdBtn.textContent = "Cmd"; cmdBtn.dataset.key = "meta";
     osText.textContent = "Mac";
+
     bottomRow.innerHTML = "";
-    bottomRow.appendChild(altBtn); bottomRow.appendChild(ctrlBtn);
+    bottomRow.appendChild(ctrlBtn);
+    bottomRow.appendChild(altBtn);
+    bottomRow.appendChild(cmdBtn);
+
+    // 버튼 바인딩
+    bindKeyBtn(ctrlBtn);
+    bindKeyBtn(altBtn);
+    bindKeyBtn(cmdBtn);
   } else {
+    // ✅ Win: Ctrl / Alt (Cmd는 숨김)
     ctrlBtn.textContent = "Ctrl"; ctrlBtn.dataset.key = "control";
     altBtn.textContent = "Alt"; altBtn.dataset.key = "alt";
     osText.textContent = "Win";
+
     bottomRow.innerHTML = "";
-    bottomRow.appendChild(ctrlBtn); bottomRow.appendChild(altBtn);
+    bottomRow.appendChild(ctrlBtn);
+    bottomRow.appendChild(altBtn);
+
+    bindKeyBtn(ctrlBtn);
+    bindKeyBtn(altBtn);
   }
 }
 
@@ -1181,8 +1540,72 @@ function toggleMobileCategories() {
 }
 
 // ── DOMContentLoaded ──
+
+
+// ✅ Mac Option(alt) 조합에서 e.key가 특수문자/Dead key로 바뀌는 문제를 회피하기 위해
+//    문자/숫자 키는 e.code(물리 키 위치)에서 안정적으로 추출합니다.
+function keyFromCode(e) {
+  const c = e.code || "";
+
+  // A~Z
+  if (c.startsWith("Key")) return c.slice(3).toLowerCase(); // "KeyI" -> "i"
+  // 0~9
+  if (c.startsWith("Digit")) return c.slice(5); // "Digit6" -> "6"
+
+  // 기본 기호키(필요시 확장)
+  const map = {
+    Minus: "-",
+    Equal: "=",
+    BracketLeft: "[",
+    BracketRight: "]",
+    Backslash: "\\\\",
+    Semicolon: ";",
+    Quote: "'",
+    Comma: ",",
+    Period: ".",
+    Slash: "/",
+    Backquote: "`",
+    IntlBackslash: "\\\\"
+  };
+
+  return map[c] || null;
+}
+
+
+
+// ✅ F1~F12 키 포함 여부 체크 (Mac fn 안내용)
+function hasFunctionKey(shortcutArray) {
+  return shortcutArray.some(k => /^f([1-9]|1[0-2])$/i.test(k));
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
-  updateKeyLabels();
+  
+    // ✅ 테마(라이트/다크) 토글: localStorage 저장 + 시스템 테마(저장값 없을 때만) 반영
+    const themeBtn = document.getElementById("ds-theme-toggle");
+    const savedTheme = localStorage.getItem("ds-theme");
+
+    if (savedTheme === "dark") {
+      document.body.classList.add("dark");
+    } else if (!savedTheme && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      document.body.classList.add("dark");
+    }
+
+    function syncThemeToggleUI() {
+      const isDark = document.body.classList.contains("dark");
+      if (!themeBtn) return;
+      themeBtn.setAttribute("aria-pressed", isDark ? "true" : "false");
+      themeBtn.setAttribute("title", isDark ? "라이트모드 전환" : "다크모드 전환");
+    }
+    syncThemeToggleUI();
+
+    themeBtn?.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      const isDark = document.body.classList.contains("dark");
+      localStorage.setItem("ds-theme", isDark ? "dark" : "light");
+      syncThemeToggleUI();
+    });
+updateKeyLabels();
   updateProgress(0, 0);
   loadProblems();
 
@@ -1211,10 +1634,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ── 수식키(Ctrl/Shift/Alt/Meta) 처리 ──
     if (["control", "alt", "shift", "meta"].includes(key)) {
-      // Mac: Cmd(meta) → control로 매핑
-      const storeKey = (osMode === "mac" && key === "meta") ? "control"
-                     : (osMode === "mac" && key === "control") ? "meta"
-                     : key;
+      const storeKey = key; // ✅ 스왑 금지: 실제 키 그대로 저장
       pressedKeys.add(storeKey);
 
       // 화면 버튼 active 표시
@@ -1225,6 +1645,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ✅ Shift 조합 시 특수문자를 원래 키로 변환
     let normalizedKey = key;
+
+    // ✅ Mac 모드에서 Option(alt) 조합/Dead key로 e.key가 깨질 때: e.code로 문자키를 복원
+    if (osMode === "mac" && (e.altKey || key === "dead")) {
+      const fromCode = keyFromCode(e);
+      if (fromCode) normalizedKey = fromCode;
+    }
     if (e.shiftKey) {
       const shiftMap = {
         '!': '1', '@': '2', '#': '3', '$': '4', '%': '5',
@@ -1252,9 +1678,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const key = e.key.toLowerCase();
     if (!["control", "alt", "shift", "meta"].includes(key)) return;
 
-    const storeKey = (osMode === "mac" && key === "meta") ? "control"
-                   : (osMode === "mac" && key === "control") ? "meta"
-                   : key;
+    const storeKey = key; // ✅ 스왑 금지
 
     if (!isInputLocked) {
       pressedKeys.delete(storeKey);
