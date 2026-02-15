@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>단축키 퀴즈 - Design Skills Lab</title>
+
+  <!-- PWA 핵심 -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#3e64ff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="단축키 퀴즈" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+
+  <!-- Service Worker 등록 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
+  </script>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/" crossorigin />
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Pretendard', sans-serif;
+      background: #f0f3fc;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    /* ── 전체화면 상단 바 ── */
+    #fs-topbar {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 44px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #e8ecf8;
+      z-index: 500;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      gap: 12px;
+    }
+    #fs-topbar.visible { display: flex; }
+    #fs-topbar .fs-hint {
+      font-size: 12px;
+      color: #888;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #fs-topbar .fs-hint kbd {
+      background: #f0f3fc;
+      border: 1px solid #d0d7f0;
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-family: 'Pretendard', sans-serif;
+      color: #555;
+    }
+    #fs-exit-btn {
+      background: none;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: #555;
+      cursor: pointer;
+      font-family: 'Pretendard', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    #fs-exit-btn:hover { background: #f5f5f5; border-color: #bbb; }
+    body.fullscreen-mode { padding-top: 56px; }
+
+    /* ── PWA 설치 배너 ── */
+    #pwa-banner {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #3e64ff;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(62,100,255,0.35);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      white-space: nowrap;
+    }
+    #pwa-banner.hidden { display: none !important; }
+    #pwa-install-btn {
+      background: white;
+      color: #3e64ff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    #pwa-dismiss-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 18px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    /* ── 전체화면 안내 오버레이 ── */
+    #fullscreen-overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #0f1535 0%, #1a2560 60%, #0d1030 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      gap: 0;
+    }
+    #fullscreen-overlay.hidden { display: none; }
+    .overlay-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      padding: 48px 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      max-width: 460px;
+      width: 90%;
+      backdrop-filter: blur(12px);
+    }
+    .overlay-icon { font-size: 52px; line-height: 1; }
+    #fullscreen-overlay h2 {
+      color: white;
+      font-size: 24px;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+    #fullscreen-overlay p {
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.7;
+    }
+    .overlay-divider {
+      width: 100%;
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+      margin: 4px 0;
+    }
+    .overlay-keys {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .overlay-key {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      font-family: 'Pretendard', sans-serif;
+    }
+    .overlay-key-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+    }
+    #fullscreen-overlay .overlay-btns {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+      width: 100%;
+    }
+    .overlay-btn-primary {
+      flex: 1;
+      background: #3e64ff;
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Pretendard', sans-serif;
+      transition: background 0.2s;
+    }
+    .overlay-btn-primary:hover { background: #2d52ee; }
+    .overlay-btn-secondary {
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.7);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: 'Pretendard', sans-serif;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .overlay-btn-secondary:hover { background: rgba(255,255,255,0.13); }
+
+    /* ── 기존 스타일 (아임웹에서 이식) ── */
+    .ds-container {
+      display: flex;
+      max-width: 1200px;
+      margin: 0 auto;
+      gap: 24px;
+    }
+    .ds-left {
+      width: 240px;
+      height: 707px;
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .ds-left .ds-panel {
+      flex: 1;
+      overflow-y: auto;
+      background: white;
+      scrollbar-width: thin;
+      scrollbar-color: transparent transparent;
+    }
+    .ds-left .ds-panel::-webkit-scrollbar { width: 4px; }
+    .ds-left .ds-panel::-webkit-scrollbar-track { background: transparent; }
+    .ds-left .ds-panel::-webkit-scrollbar-thumb { background-color: transparent; border-radius: 8px; }
+    .ds-left .ds-panel:hover::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); }
+    .ds-left .ds-panel > *:first-child { margin-top: 1px; }
+    .ds-left .ds-panel > *:last-child { margin-bottom: 8px; }
+    .ds-right-area { flex: 1; display: flex; flex-direction: column; gap: 24px; }
+    .ds-top-row, .ds-bottom-row { display: flex; gap: 24px; }
+    .ds-top-row .ds-panel:first-child { flex: 2; min-height: 450px; }
+    .ds-top-row .ds-panel:last-child { flex: 1; min-height: 450px; }
+    .ds-bottom-row .ds-panel:first-child { flex: 1.5; }
+    .ds-bottom-row .ds-panel:last-child { flex: 1; }
+    .ds-panel {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .ds-tool-selector { position: relative; padding: 0px 16px; margin-top: -20px; }
+    .ds-tool-btn {
+      font-family: 'Pretendard', sans-serif;
+      background: none; border: none;
+      font-size: 15px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; padding: 8px 0; border-radius: 12px; width: 100%;
+    }
+    .ds-arrow-icon { margin-left: auto; width: 16px; height: 16px; }
+    .ds-tool-dropdown {
+      position: absolute; top: 100%; left: 0; width: 200px;
+      background: white; border: 1px solid #dbe0f5; border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08); overflow: hidden;
+      max-height: 0; opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.2s ease;
+      pointer-events: none; z-index: 100; padding-left: 0;
+      margin-top: -43px; margin-left: -1px;
+    }
+    .ds-tool-dropdown.show { max-height: 500px; opacity: 1; pointer-events: auto; }
+    .ds-tool-dropdown li {
+      font-family: 'Pretendard', sans-serif;
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px; font-size: 15px; cursor: pointer;
+      transition: background 0.2s ease; list-style: none;
+    }
+    .ds-tool-dropdown li:hover { background-color: #f3f6ff; }
+    .ds-tool-dropdown li.selected { font-weight: bold; pointer-events: none; background-color: #f8faff; }
+    .ds-tool-dropdown .ds-divider { height: 1px; background-color: #eee; margin: 4px 0; }
+    .ds-tool-icon { width: 22px; height: 22px; border-radius: 6px; }
+    .ds-tool-close {
+      text-align: right; padding: 8px 12px 4px; font-size: 14px;
+      cursor: pointer; color: #999; font-weight: bold;
+      transition: color 0.2s ease; position: absolute; right: 0; top: 6px; margin-right: 4.5px;
+    }
+    .ds-tool-close:hover { color: #555; }
+    #ds-main-categories::before {
+      content: ""; display: block; height: 1px;
+      background-color: #e2e6f3; margin: 16px 0;
+    }
+    .ds-top-category { display: flex; flex-direction: column; gap: 4px; }
+    .ds-sub-category { display: flex; flex-direction: column; gap: 3px; }
+    #ds-sub-categories::before {
+      content: ""; display: block; height: 1px;
+      background-color: #ddd; margin: 8px 0px 12px 0px;
+    }
+    .ds-topcat-btn {
+      background: none; border-radius: 12px; padding: 10px 12px;
+      border: none; cursor: pointer; display: flex; flex-direction: column;
+      transition: background 0.2s ease; text-align: left;
+    }
+    .ds-topcat-btn.active { background: #edf2ff; color: #000; }
+    .ds-topcat-btn .topcat-label { display: flex; justify-content: space-between; align-items: center; }
+    .ds-topcat-btn .title { font-family: 'Pretendard', sans-serif; font-size: 13px; line-height: 1.3; font-weight: 700; }
+    .ds-topcat-btn .badge { font-family: 'Pretendard', sans-serif; font-size: 12px; color: #FF2B00; font-weight: 500; background: none; padding: 0; }
+    .ds-topcat-count { font-size: 12px; color: #888; margin-left: 2px; line-height: 1.2; }
+    .ds-subcat-btn {
+      background: none; border-radius: 8px; padding: 6px 20px;
+      border: none; cursor: pointer; display: flex; transition: background 0.2s ease; text-align: left;
+    }
+    .ds-subcat-btn.active { background: #edf2ff; color: #000; }
+    .ds-subcat-btn .subcat-label { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+    .icon-title-wrapper { display: flex; align-items: center; gap: 6px; }
+    .ds-subcat-btn .icon { display: inline-flex; width: 22px; height: 22px; font-size: 14px; color: #333; }
+    .ds-subcat-btn .title { font-family: 'Pretendard', sans-serif; font-size: 12px; line-height: 1.3; }
+    .subcat-count { font-size: 11px; color: #888; line-height: 1.2; }
+    .ds-answer-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0; margin-top: auto; border-top: 1px solid #eee;
+    }
+    .ds-answer-btn {
+      flex: 1; font-size: 14px; padding: 12px 0;
+      background: transparent; border: none; cursor: pointer;
+      transition: background 0.2s ease; font-family: 'Pretendard', sans-serif;
+    }
+    .ds-answer-btn.left { border-right: 1px solid #eee; }
+    .ds-answer-btn:hover { background-color: #f5f5f5; }
+    .ds-keyboard-panel, .ds-progress-panel { height: 220px; }
+    .ds-panel.ds-panel-question { padding: 20px 35px 2px 35px !important; }
+    .ds-panel-question .ds-answer-footer { padding: 4px 0; margin-top: auto; border-top: 1px solid #eee; }
+    .ds-panel-question .ds-answer-btn { flex: 1; font-size: 13px; padding: 8px 0; background: transparent; border: none; cursor: pointer; transition: background 0.2s ease; font-family: 'Pretendard', sans-serif; }
+    .ds-panel-question .ds-answer-btn.left { border-right: 1px solid #eee; }
+    .ds-panel-question .ds-answer-btn:hover { background-color: #f5f5f5; }
+    #ds-keyboard-hint {
+      font-family: 'Pretendard', sans-serif;
+      position: absolute; bottom: 16px; left: 0;
+      width: 100%; text-align: center; font-size: 13px; color: #777;
+    }
+    .ds-shortcut__top { display: flex; justify-content: space-between; align-items: center; }
+    #ds-command { font-family: 'Pretendard', sans-serif; font-size: 28px; font-weight: 800; }
+    #ds-desc { font-family: 'Pretendard', sans-serif; color: #444; font-size: 14px; }
+    #ds-link { font-family: 'Pretendard', sans-serif; font-weight: 500; margin-top: -30px; margin-right: -15px; }
+    #ds-preview {
+      width: 380px; height: 260px; position: absolute;
+      bottom: 60px; right: 53px; background: #aaa; border-radius: 10px;
+    }
+    .ds-keyboard-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+    .ds-keyboard-buttons-wrapper { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 10px 0; }
+    .ds-keyboard-column { display: flex; flex-direction: column; gap: 12px; }
+    .ds-keyboard-button-row { display: flex; gap: 12px; }
+    .ds-divider { width: 1.4px; height: 100%; background-color: #eee; margin: 0 20px; }
+    .ds-keyboard-title { font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 14px; }
+    .ds-key-btn {
+      font-size: 16px; padding: 8px 16px; border-radius: 12px;
+      background: #fff; border: 2px solid #ccc;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+      transition: all 0.2s ease; min-width: 64px; min-height: 46px;
+      cursor: pointer; font-family: 'Pretendard', sans-serif;
+    }
+    .ds-key-btn.active { background: #dce3ff; color: #305aff; border-color: #b7c6ff; font-weight: 600; }
+    .btn-size-shift { min-width: 140px !important; }
+    .btn-size-ctrl { min-width: 80px !important; }
+    .btn-size-alt { min-width: 70px !important; margin-left: 20px; }
+    .ds-keyboard-display {
+      width: 80px; height: 80px; background: white;
+      border: 2px solid #ccc; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .ds-toggle-btn { font-size: 13px; padding: 6px 12px; border-radius: 8px; border: 1px solid #3e64ff; background: white; color: #3e64ff; cursor: pointer; }
+    .ds-link { font-size: 13px; color: #3e64ff; text-decoration: none; }
+    .ds-progress-panel h4 { font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 14px; margin: 0 0 4px; }
+    #ds-progress-label { font-size: 11px; color: #888; margin-bottom: 2px; }
+    .ds-progress-ring { position: relative; width: 120px; height: 120px; margin: 2px auto; }
+    .ds-progress-ring svg { width: 120px; height: 120px; transform: rotate(-90deg); }
+    .ds-progress-ring circle { fill: none; stroke-width: 10; }
+    .ds-progress-ring .bg { stroke: #DDE5F3; }
+    .ds-progress-ring .progress { stroke: #3e64ff; stroke-linecap: round; stroke-dasharray: 314; stroke-dashoffset: 314; transition: stroke-dashoffset 0.6s ease; }
+    #ds-progress-count { font-family: 'Pretendard', sans-serif; font-weight: 200; margin-top: 2px; }
+    #ds-progress-percent { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; font-weight: bold; }
+    .ds-os-toggle { font-family: 'Pretendard', sans-serif; font-weight: 300; font-size: 13px; color: #555; cursor: pointer; user-select: none; padding: 2px 8px; border-radius: 8px; transition: background 0.2s ease; }
+    .ds-os-toggle:hover { background: #f0f0f0; }
+    #ds-keyboard-display.correct { background-color: #d4edda; transition: background-color 0.3s, border-color 0.3s; }
+    #ds-keyboard-display.incorrect { background-color: #f8d7da; transition: background-color 0.3s, border-color 0.3s; }
+    .ds-keyboard-panel.locked { outline: 4px solid #F17878; outline-offset: -2px; border: none; border-radius: 20px; }
+    /* 오답: 패널 전체 빨간 테두리 */
+    .ds-keyboard-panel.panel-incorrect {
+      outline: 3px solid #F17878;
+      outline-offset: -2px;
+      border-radius: 20px;
+    }
+    /* 정답: 패널 전체 초록 테두리 */
+    .ds-keyboard-panel.panel-correct {
+      outline: 3px solid #4caf7d;
+      outline-offset: -2px;
+      border-radius: 20px;
+    }
+    @keyframes shake { 0% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } 100% { transform: translateX(0); } }
+    .ds-keyboard-panel.shake { animation: shake 0.4s ease-in-out; }
+    .ds-keyboard-panel.locked.shake { animation: shake 0.3s ease-in-out; }
+    @keyframes highlightFade { 0% { box-shadow: 0 0 0 4px #F17878; } 100% { box-shadow: 0 0 0 0 rgba(48,90,255,0); } }
+    .ds-keyboard-panel.highlight { animation: highlightFade 1.8s ease-out, shake 0.3s ease-in-out; }
+    .ds-key-btn.highlight, #ds-keyboard-display.highlight { box-shadow: 0 0 0 2px #b7c6ff; transition: box-shadow 0.3s ease; }
+    .ds-answer-btn.right.gradient-animate { position: relative; overflow: hidden; font-weight: bold; border-radius: 3px; }
+    .ds-answer-btn.right.gradient-animate::after { content: ""; position: absolute; top: 10%; width: 40%; height: 80%; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(62,100,255,0.25) 50%, rgba(255,255,255,0) 100%); border-radius: 20px; filter: blur(8px); animation: slideLight 1.8s ease-in-out infinite; pointer-events: none; }
+    @keyframes slideLight { 0% { left: -40%; } 100% { left: 110%; } }
+    .ds-version-text { text-align: center; font-size: 10px; color: #888; padding: 12px 0; cursor: pointer; margin-top: auto; font-family: 'Pretendard', sans-serif; }
+    .ds-version-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(33,33,33,0.5); display: flex; justify-content: center; align-items: center; z-index: 999; }
+    .ds-version-popup.hidden { display: none; }
+    .ds-version-popup-content { background: white; border-radius: 16px; padding: 24px 20px; width: 90%; max-width: 460px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); position: relative; font-family: 'Pretendard', sans-serif; }
+    .ds-popup-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 16px; margin-bottom: 12px; }
+    .ds-popup-close { border: none; background: none; font-size: 18px; color: #888; cursor: pointer; transition: color 0.2s; }
+    .ds-popup-close:hover { color: #444; }
+    .ds-popup-body { font-size: 14px; line-height: 1.6; color: #333; }
+    .ds-tool-toggle-btn { display: none; }
+    .ds-tool-toggle-btn svg { transition: transform 0.3s ease; }
+    .ds-tool-toggle-btn.active svg { transform: rotate(180deg); }
+
+    /* ── 반응형 ── */
+    @media (max-width: 768px) {
+      .ds-container { flex-direction: column; padding: 0 12px; }
+      .ds-left { display: none; }
+      .ds-keyboard-panel { display: flex !important; height: auto; min-height: 160px; }
+      .ds-progress-panel { display: none; }
+      .ds-left.mobile-open { display: block; width: 100%; height: auto; margin-bottom: 12px; }
+      .ds-tool-toggle-btn { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 12px 16px; border-radius: 12px; font-weight: 600; font-size: 15px; cursor: pointer; font-family: 'Pretendard', sans-serif; margin: -30px 12px 12px; }
+      #ds-link { margin-right: 5px; }
+      .ds-tool-dropdown { width: 100%; }
+      .ds-right-area { width: 100%; }
+      /* 모바일 키보드 패널 레이아웃 */
+      .ds-keyboard-buttons-wrapper { padding: 12px 6px 0; gap: 10px; }
+      .ds-key-btn { min-width: 52px !important; min-height: 40px; font-size: 14px; padding: 6px 10px; }
+      .btn-size-shift { min-width: 110px !important; }
+      .btn-size-ctrl { min-width: 60px !important; }
+      .btn-size-alt { min-width: 52px !important; margin-left: 10px; }
+      .ds-keyboard-display { width: 64px; height: 64px; font-size: 22px; }
+      #ds-keyboard-hint { position: static; margin-top: 10px; padding-bottom: 8px; font-size: 12px; }
+    }
+    @media (max-width: 768px) {
+      .ds-top-row { flex-direction: column; }
+      .ds-panel.ds-panel-question { min-height: unset; padding: 20px 16px 4px !important; border-radius: 16px; }
+      #ds-preview { position: static; display: block; width: 100%; height: auto; max-width: 100%; margin-top: 16px; border-radius: 8px; aspect-ratio: 400 / 260; }
+      .ds-answer-footer { flex-direction: column; gap: 8px; margin-top: 20px; }
+      .ds-answer-btn { width: 100%; border-right: none !important; border-top: 1px solid #eee; padding: 12px 0; }
+    }
+    @media (max-width: 980px) {
+      #ds-preview { position: static; display: block; margin: 16px auto 0; max-width: 100%; height: auto; aspect-ratio: 400 / 260; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 전체화면 상단바 -->
+<div id="fs-topbar">
+  <div class="fs-hint">
+    <kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Alt</kbd> 조합 후 문자 키 입력
+    &nbsp;|&nbsp; 차단된 단축키: <kbd>Ctrl+W</kbd> <kbd>Ctrl+T</kbd> <kbd>Ctrl+R</kbd> 등
+  </div>
+  <button id="fs-exit-btn" onclick="exitFullscreen()">
+    ⛶ 전체화면 나가기
+  </button>
+</div>
+
+<!-- 전체화면 안내 오버레이 -->
+<div id="fullscreen-overlay">
+  <div class="overlay-card">
+    <div class="overlay-icon">⌨️</div>
+    <h2>전체화면 모드 권장</h2>
+    <p>전체화면에서는 Ctrl+W, Ctrl+T 등<br>브라우저 단축키가 완전히 차단돼요.</p>
+    <div class="overlay-divider"></div>
+    <div class="overlay-keys">
+      <span class="overlay-key-label">차단되는 키:</span>
+      <span class="overlay-key">Ctrl+W</span>
+      <span class="overlay-key">Ctrl+T</span>
+      <span class="overlay-key">Ctrl+R</span>
+      <span class="overlay-key">Ctrl+F</span>
+      <span class="overlay-key">Ctrl+P</span>
+    </div>
+    <div class="overlay-btns">
+      <button class="overlay-btn-primary" onclick="enterFullscreen()">🖥 전체화면으로 시작</button>
+      <button class="overlay-btn-secondary" onclick="skipFullscreen()">그냥 계속</button>
+    </div>
+  </div>
+</div>
+
+<!-- PWA 설치 배너 -->
+<div id="pwa-banner" class="hidden">
+  <span>📲 앱으로 설치하면 더 편해요!</span>
+  <button id="pwa-install-btn">설치하기</button>
+  <button id="pwa-dismiss-btn" onclick="dismissPWA()">✕</button>
+</div>
+
+<!-- 모바일 카테고리 토글 -->
+<div class="ds-tool-toggle-btn" onclick="toggleMobileCategories()">
+  카테고리 보기
+  <svg id="ds-category-arrow" width="16" height="16" fill="none" stroke="#333" stroke-width="2" viewBox="0 0 24 24">
+    <path d="M6 9l6 6 6-6"/>
+  </svg>
+</div>
+
+<div class="ds-container">
+  <div class="ds-left">
+    <div class="ds-panel">
+      <div class="ds-tool-selector">
+        <button class="ds-tool-btn" onclick="toggleToolDropdown()">
+          <img id="selected-tool-icon" src="https://cdn.imweb.me/upload/S20190713161f9b85458b3/2f0361160b913.png" class="ds-tool-icon" />
+          <span id="selected-tool-name">Photoshop</span>
+          <svg class="ds-arrow-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+        <ul id="tool-dropdown" class="ds-tool-dropdown"></ul>
+      </div>
+      <div id="ds-main-categories" class="ds-top-category"></div>
+      <div id="ds-sub-categories" class="ds-sub-category"></div>
+    </div>
+    <div id="ds-version-info" class="ds-version-text" onclick="openVersionPopup()">v1.1.0 PWA</div>
+    <div id="ds-version-popup" class="ds-version-popup hidden" onclick="closeVersionPopupByBackdrop(event)">
+      <div class="ds-version-popup-content">
+        <div class="ds-popup-header">
+          <span>버전 정보</span>
+          <button class="ds-popup-close" onclick="closeVersionPopup()">✕</button>
+        </div>
+        <div class="ds-popup-body">
+          <p><strong>v1.1.0 PWA</strong> - 브라우저 단축키 충돌 해결 버전<br>
+             전체화면 모드에서 Ctrl+W, Ctrl+T 등의 충돌 없이 모든 단축키 학습 가능<br>
+             버그 리포트: designskillslab@gmail.com</p>
+          <hr style="margin: 12px 0;">
+          <p><strong>[공지사항]</strong><br>
+             이 서비스는 디자인 스킬 랩의 자산이므로 무단 복제, 배포를 금지합니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ds-right-area">
+    <div class="ds-top-row">
+      <div class="ds-panel ds-panel-question">
+        <div class="ds-shortcut__top">
+          <div id="ds-command">문제 제목 예시</div>
+          <a id="ds-link" class="ds-link" href="#" target="_blank" style="display: none;">더 알아보기</a>
+        </div>
+        <div id="ds-desc">해당 기능에 대한 설명이 이곳에 들어갑니다.</div>
+        <img id="ds-preview" src="" alt="Preview" />
+        <div class="ds-answer-footer">
+          <button class="ds-answer-btn left" onclick="showAnswer()">정답 보기</button>
+          <button class="ds-answer-btn right" onclick="skipQuestion()">다음</button>
+        </div>
+      </div>
+      <!-- 광고 영역 (PWA 버전에서는 선택적) -->
+      <div class="ds-panel" style="flex:1; min-height:450px; display:flex; align-items:center; justify-content:center; color:#ccc; font-size:13px;">
+        광고 영역
+      </div>
+    </div>
+
+    <div class="ds-bottom-row">
+      <div class="ds-panel ds-keyboard-panel">
+        <div class="ds-keyboard-header">
+          <span class="ds-keyboard-title">Keyboard</span>
+          <div>
+            <span id="ds-os-mode" class="ds-os-toggle">Win</span>
+          </div>
+        </div>
+        <div class="ds-keyboard-buttons-wrapper">
+          <div class="ds-keyboard-column" id="ds-keyboard-buttons">
+            <div class="ds-keyboard-button-row">
+              <button class="ds-key-btn btn-size-shift" id="btn-shift" data-key="shift">Shift</button>
+            </div>
+            <div class="ds-keyboard-button-row" id="ds-bottom-row">
+              <button class="ds-key-btn btn-size-ctrl" id="btn-ctrl" data-key="control">Ctrl</button>
+              <button class="ds-key-btn btn-size-alt" id="btn-alt" data-key="alt">Alt</button>
+            </div>
+          </div>
+          <div class="ds-divider"></div>
+          <div id="ds-keyboard-display" class="ds-keyboard-display">?</div>
+        </div>
+        <div id="ds-keyboard-hint" class="ds-keyboard-hint">
+          조합형 단축키는 버튼을 클릭한 후 키를 입력해주세요.
+        </div>
+      </div>
+
+      <div class="ds-panel ds-progress-panel">
+        <h4>Progress</h4>
+        <p id="ds-progress-label">자주쓰는 단축키</p>
+        <div class="ds-progress-ring">
+          <svg viewBox="0 0 120 120">
+            <circle class="bg" cx="60" cy="60" r="50" />
+            <circle class="progress" cx="60" cy="60" r="50" />
+          </svg>
+          <span id="ds-progress-percent">0%</span>
+        </div>
+        <div id="ds-progress-count" style="font-size:14px;color:#555;text-align:center;">0/0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// 🔑 브라우저 단축키 차단 (preventDefault만, stopPropagation 제거)
+// ══════════════════════════════════════════════
+document.addEventListener('keydown', function(e) {
+  const key = e.key.toLowerCase();
+  const isFKey = /^f\d+$/.test(key); // f1, f2 ... f12
+  
+  // Ctrl/Alt/Meta 조합은 항상 차단
+  if (e.ctrlKey || e.altKey || e.metaKey) {
+    e.preventDefault();
+    return;
+  }
+  
+  // ✅ Shift+F5는 브라우저 강제 새로고침이므로 차단하되, 퀴즈 로직으로는 전달
+  // preventDefault만 하고 이벤트는 계속 전파 (stopPropagation 없음)
+  if (isFKey) {
+    e.preventDefault(); // 브라우저 기본 동작만 차단
+  }
+}, true);
+
+// ══════════════════════════════════════════════
+// 전체화면 관련
+// ══════════════════════════════════════════════
+function enterFullscreen() {
+  const el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen();
+  else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  document.getElementById('fullscreen-overlay').classList.add('hidden');
+}
+
+function exitFullscreen() {
+  if (document.exitFullscreen) document.exitFullscreen();
+  else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+}
+
+function skipFullscreen() {
+  document.getElementById('fullscreen-overlay').classList.add('hidden');
+}
+
+function updateFullscreenUI(isFs) {
+  const topbar = document.getElementById('fs-topbar');
+  if (isFs) {
+    document.getElementById('fullscreen-overlay').classList.add('hidden');
+    topbar.classList.add('visible');
+    document.body.classList.add('fullscreen-mode');
+  } else {
+    topbar.classList.remove('visible');
+    document.body.classList.remove('fullscreen-mode');
+  }
+}
+
+document.addEventListener('fullscreenchange', () => updateFullscreenUI(!!document.fullscreenElement));
+document.addEventListener('webkitfullscreenchange', () => updateFullscreenUI(!!document.webkitFullscreenElement));
+
+// ══════════════════════════════════════════════
+// PWA 설치 배너
+// ══════════════════════════════════════════════
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('pwa-banner').classList.remove('hidden');
+});
+
+document.getElementById('pwa-install-btn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('pwa-banner').classList.add('hidden');
+});
+
+function dismissPWA() {
+  document.getElementById('pwa-banner').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════════
+// 기존 퀴즈 로직 (원본 그대로)
+// ══════════════════════════════════════════════
+let pressedKeys = new Set();
+let correctAnswers = new Set();
+let skippedAnswers = new Set();
+let allProblems = [];
+let filteredProblems = [];
+let currentProblem = null;
+let selectedMain = null;
+let selectedSubcats = new Set();
+let categoryCounts = {};
+let totalQuestionCount = 0;
+let osMode = "win";
+let isAnswerShown = false;
+let isInputLocked = false;
+
+const restrictedKeys = new Set([
+  "tab", "capslock", "contextmenu", "backspace", "escape", "home", "end", "pagedown", "pageup",
+  "enter", "delete", "arrowup", "arrowdown", "arrowleft", "arrowright"
+  // F1~F12는 제거 - 단축키 문제로 사용 가능하도록
+]);
+
+const topCategories = [
+  { label: "자주 쓰는 단축키", value: "favorite" },
+  { label: "All Shortcuts", value: "all" }
+];
+
+const iconMap = {
+  toolbar: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/52176a0448b5a.png",
+  file: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/1b26781514f2a.png",
+  edit: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/94261d545bd4f.png",
+  image: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/960f08147e155.png",
+  layer: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/1f9b14a9177f3.png",
+  select: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/8612a55fefa5b.png",
+  selection: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/8612a55fefa5b.png",
+  filter: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/1fa52067f64e0.png",
+  view: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/930774bc46e1f.png",
+  window: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/3bd70b2e92ec3.png",
+  etc: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/7bc607f00ce29.png",
+  effect: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/1fa52067f64e0.png",
+  type: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/d30fdd0446610.png",
+  text: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/d30fdd0446610.png",
+  object: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/d144f6638bb21.png",
+  shape: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/02cd9f7ab7f89.png",
+  zoom: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/67107f1dd55e0.png",
+  transform: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/ec00ab35e0ee2.png",
+  arrange: "https://cdn.imweb.me/upload/S20190713161f9b85458b3/7e8a684a31a2a.png",
+};
+
+function normalizeKey(k) {
+  const lower = k.toLowerCase();
+  if (osMode === "mac" && lower === "meta") return "control";
+  return lower;
+}
+
+function mapDisplayKey(k) {
+  const lower = k.toLowerCase();
+  if (osMode === "mac") {
+    if (lower === "control" || lower === "meta") return "Cmd";
+    if (lower === "alt") return "Option";
+  } else {
+    if (lower === "control") return "Ctrl";
+  }
+  return k.charAt(0).toUpperCase() + k.slice(1).toLowerCase();
+}
+
+async function loadProblems(jsonPath = "https://raw.githubusercontent.com/designskillslabdata/designslab/main/phshortcuts.json") {
+  try {
+    const res = await fetch(jsonPath);
+    const rawData = await res.json();
+    const data = rawData.shortcuts || rawData;
+    const categoryOrder = rawData.categoryOrder || null;
+    allProblems = data;
+    categoryCounts = {};
+    const categorySet = new Set();
+    allProblems.forEach(p => {
+      categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
+      categorySet.add(p.category);
+    });
+    let sortedCategories;
+    if (categoryOrder) {
+      sortedCategories = categoryOrder.filter(cat => categorySet.has(cat));
+    } else {
+      sortedCategories = Array.from(categorySet).sort();
+    }
+    window.dynamicCategories = sortedCategories;
+    renderCategoryButtons();
+    document.querySelector(".ds-topcat-btn[data-main='favorite']")?.click();
+  } catch (error) {
+    console.error("문제 데이터를 불러오는 데 실패했습니다:", error);
+    alert("문제를 불러오는 데 실패했습니다.(준비중)");
+  }
+}
+
+function renderCategoryButtons() {
+  const topContainer = document.getElementById("ds-main-categories");
+  const subContainer = document.getElementById("ds-sub-categories");
+  topContainer.innerHTML = "";
+  subContainer.innerHTML = "";
+  topCategories.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.className = "ds-topcat-btn";
+    btn.dataset.main = cat.value;
+    let count = cat.value === "favorite"
+      ? allProblems.filter(p => p.difficulty === "favorite").length
+      : allProblems.length;
+    btn.innerHTML = `
+      <div class="topcat-label">
+        <span class="title">${cat.label}</span>
+        ${cat.value === "favorite" ? `<span class="badge">추천</span>` : ""}
+      </div>
+      <div class="ds-topcat-count">${count}</div>`;
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".ds-topcat-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".ds-subcat-btn").forEach(b => b.classList.remove("active"));
+      selectedSubcats.clear();
+      selectedMain = cat.value;
+      btn.classList.add("active");
+      correctAnswers.clear();
+      skippedAnswers.clear();
+      applyFilters();
+    });
+    topContainer.appendChild(btn);
+  });
+
+  window.dynamicCategories.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.className = "ds-subcat-btn";
+    btn.dataset.cat = cat;
+    const count = categoryCounts[cat] || 0;
+    const iconURL = iconMap[cat] || "https://cdn.imweb.me/upload/S20190713161f9b85458b3/7bc607f00ce29.png";
+    btn.innerHTML = `
+      <div class="subcat-label">
+        <div class="icon-title-wrapper">
+          <img class="icon" src="${iconURL}" alt="${cat}" width="20" height="20" />
+          <div>
+            <div class="title">${cat.charAt(0).toUpperCase() + cat.slice(1)}</div>
+            <div class="subcat-count">${count}</div>
+          </div>
+        </div>
+      </div>`;
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".ds-topcat-btn").forEach(b => b.classList.remove("active"));
+      selectedMain = null;
+      if (selectedSubcats.has(cat)) {
+        selectedSubcats.delete(cat);
+        btn.classList.remove("active");
+      } else {
+        selectedSubcats.add(cat);
+        btn.classList.add("active");
+      }
+      correctAnswers.clear();
+      skippedAnswers.clear();
+      applyFilters();
+    });
+    subContainer.appendChild(btn);
+  });
+}
+
+function applyFilters() {
+  filteredProblems = allProblems.filter(p => {
+    const mainMatch = !selectedMain || selectedMain === 'all' || (selectedMain === 'favorite' && p.difficulty === 'favorite');
+    const subMatch = selectedSubcats.size === 0 || selectedSubcats.has(p.category);
+    return mainMatch && subMatch;
+  });
+  const labelEl = document.getElementById("ds-progress-label");
+  if (selectedMain) {
+    const selectedTop = topCategories.find(cat => cat.value === selectedMain);
+    labelEl.textContent = selectedTop ? selectedTop.label : "";
+  } else if (selectedSubcats.size > 0) {
+    labelEl.textContent = Array.from(selectedSubcats).map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(", ");
+  } else {
+    labelEl.textContent = "";
+  }
+  totalQuestionCount = filteredProblems.length;
+  updateProgress(0, totalQuestionCount);
+  currentProblem = null;
+  if (filteredProblems.length > 0) {
+    shuffleArray(filteredProblems);
+    showProblem(filteredProblems.shift());
+  } else {
+    showProblem(null);
+  }
+}
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function updateProgress(correct, total) {
+  const percent = total > 0 ? Math.round((correct / total) * 100) : 0;
+  const offset = 314 - (314 * percent) / 100;
+  document.querySelector(".ds-progress-ring .progress").style.strokeDashoffset = offset;
+  document.getElementById("ds-progress-percent").textContent = `${percent}%`;
+  document.getElementById("ds-progress-count").textContent = `${correct}/${total}`;
+}
+
+function showProblem(problem) {
+  isAnswerShown = false;
+  currentProblem = problem;
+  const commandEl = document.getElementById("ds-command");
+  const descEl = document.getElementById("ds-desc");
+  const previewEl = document.getElementById("ds-preview");
+  const linkEl = document.getElementById("ds-link");
+  const feedbackEl = document.getElementById("ds-keyboard-hint");
+  const keyDisplayEl = document.getElementById("ds-keyboard-display");
+  const keyboardPanel = document.querySelector(".ds-keyboard-panel");
+  const answerBtn = document.querySelector(".ds-answer-btn.left");
+  const answerNextBtn = document.querySelector(".ds-answer-btn.right");
+  const mainPreview = "https://cdn.imweb.me/upload/S20190713161f9b85458b3/3e3d1e514ec0d.gif";
+  const surprisePreviews = ["https://cdn.imweb.me/upload/S20190713161f9b85458b3/2833944b90bfa.gif"];
+
+  pressedKeys.clear();
+  document.querySelectorAll('.ds-key-btn').forEach(b => b.classList.remove("active", "highlight"));
+  keyDisplayEl.classList.remove("highlight", "correct", "incorrect");
+  keyDisplayEl.textContent = "?";
+
+  if (!problem) {
+    commandEl.textContent = "문제가 없습니다";
+    descEl.textContent = "선택된 조건에 맞는 문제가 없습니다.";
+    feedbackEl.textContent = "";
+    keyboardPanel.classList.remove("locked");
+    linkEl.style.display = "none";
+    if (answerBtn) answerBtn.textContent = "정답 보기";
+    return;
+  }
+
+  commandEl.textContent = problem.command;
+  descEl.innerHTML = problem.description.replace(/\n/g, "<br>");
+  const hasPreview = problem.preview && problem.preview !== "#";
+  let previewFallback = mainPreview;
+  if (Math.random() < 0.05) {
+    const random = surprisePreviews[Math.floor(Math.random() * surprisePreviews.length)];
+    previewFallback = random;
+  }
+  previewEl.src = hasPreview ? problem.preview : previewFallback;
+  if (problem.link && problem.link !== "#") {
+    linkEl.style.display = "inline";
+    linkEl.href = problem.link;
+  } else {
+    linkEl.style.display = "none";
+  }
+  if (answerBtn) answerBtn.textContent = "정답 보기";
+  
+  // ✅ preinput 로직 제거 - 모든 단축키 정상 입력 가능
+  feedbackEl.textContent = "조합형 단축키는 버튼을 클릭한 후 키를 입력해주세요.";
+  keyboardPanel.classList.remove("locked");
+  if (answerNextBtn) answerNextBtn.classList.remove("gradient-animate");
+}
+
+function indicateKeyResult(isCorrect) {
+  const keyDisplay = document.getElementById("ds-keyboard-display");
+  keyDisplay.classList.remove("correct", "incorrect");
+  void keyDisplay.offsetWidth;
+  if (isCorrect) {
+    keyDisplay.classList.add("correct");
+  } else {
+    keyDisplay.classList.add("incorrect");
+    setTimeout(() => keyDisplay.classList.remove("incorrect"), 800);
+  }
+}
+
+function showAnswer() {
+  if (!currentProblem || !currentProblem.shortcut) return;
+  const answerText = currentProblem.shortcut.map(mapDisplayKey).join(" + ");
+  const answerBtn = document.querySelector(".ds-answer-btn.left");
+  if (!answerBtn) return;
+  const keyDisplay = document.getElementById("ds-keyboard-display");
+  if (!isAnswerShown) {
+    answerBtn.textContent = answerText;
+    isAnswerShown = true;
+    pressedKeys.clear();
+    document.querySelectorAll('.ds-key-btn').forEach(b => b.classList.remove("active", "highlight"));
+    const modifiers = ["control", "shift", "alt", "meta"];
+    currentProblem.shortcut.forEach(k => {
+      const key = k.toLowerCase();
+      let displayKey = key;
+      if (osMode === "mac") {
+        if (key === "control") displayKey = "meta";
+      }
+      if (modifiers.includes(key)) {
+        const btn = document.querySelector(`.ds-key-btn[data-key='${displayKey}']`);
+        if (btn) { btn.classList.add("active", "highlight"); pressedKeys.add(displayKey); }
+      } else {
+        keyDisplay.textContent = key.toUpperCase();
+        keyDisplay.classList.add("highlight");
+      }
+    });
+  } else {
+    answerBtn.textContent = "정답 보기";
+    isAnswerShown = false;
+    pressedKeys.clear();
+    document.querySelectorAll('.ds-key-btn').forEach(b => b.classList.remove("active", "highlight"));
+    keyDisplay.textContent = "?";
+    keyDisplay.classList.remove("highlight");
+  }
+}
+
+function checkAnswer() {
+  if (!currentProblem || !currentProblem.shortcut || isInputLocked) return;
+  const userInput = Array.from(pressedKeys).map(normalizeKey).sort();
+  const answer = currentProblem.shortcut.map(k => k.toLowerCase()).sort();
+  if (userInput.length < answer.length) return;
+  const correct = JSON.stringify(userInput) === JSON.stringify(answer);
+
+  const feedbackEl = document.getElementById("ds-keyboard-hint");
+  const keyDisplay = document.getElementById("ds-keyboard-display");
+  const keyboardPanel = document.querySelector(".ds-keyboard-panel");
+
+  indicateKeyResult(correct);
+  isInputLocked = true;
+
+  if (correct) {
+    feedbackEl.textContent = "정답입니다! ✓";
+    correctAnswers.add(currentProblem.command);
+    // 패널 전체 초록 테두리
+    keyboardPanel.classList.add("panel-correct");
+    setTimeout(() => {
+      keyboardPanel.classList.remove("panel-correct");
+      isInputLocked = false;
+      pressedKeys.clear();
+      document.querySelectorAll('.ds-key-btn').forEach(b => b.classList.remove("active"));
+      showProblem(filteredProblems.shift() || null);
+      updateProgress(correctAnswers.size + skippedAnswers.size, totalQuestionCount);
+    }, 600);
+
+  } else {
+    feedbackEl.textContent = "오답입니다. 다시 시도해보세요.";
+    // ✅ 패널 전체 빨간 테두리 + 강한 흔들림
+    keyboardPanel.classList.add("panel-incorrect", "shake");
+    setTimeout(() => {
+      keyboardPanel.classList.remove("panel-incorrect", "shake");
+      isInputLocked = false;
+      keyDisplay.textContent = "?";
+      keyDisplay.classList.remove("incorrect", "highlight");
+      pressedKeys.clear();
+      document.querySelectorAll('.ds-key-btn').forEach(b => b.classList.remove("active"));
+    }, 600);
+  }
+}
+
+function skipQuestion() {
+  if (currentProblem) skippedAnswers.add(currentProblem.command);
+  if (filteredProblems.length > 0) {
+    showProblem(filteredProblems.shift());
+  } else {
+    showProblem(null);
+  }
+  updateProgress(correctAnswers.size + skippedAnswers.size, totalQuestionCount);
+}
+
+function toggleOSMode() {
+  osMode = osMode === "win" ? "mac" : "win";
+  updateKeyLabels();
+  document.getElementById("ds-keyboard-hint").textContent = "조합형 단축키는 버튼을 클릭한 후 키를 입력해주세요.";
+}
+
+function updateKeyLabels() {
+  const ctrlBtn = document.getElementById("btn-ctrl");
+  const altBtn = document.getElementById("btn-alt");
+  const osText = document.getElementById("ds-os-mode");
+  const bottomRow = document.getElementById("ds-bottom-row");
+  if (osMode === "mac") {
+    ctrlBtn.textContent = "Cmd"; ctrlBtn.dataset.key = "meta";
+    altBtn.textContent = "Option"; altBtn.dataset.key = "alt";
+    osText.textContent = "Mac";
+    bottomRow.innerHTML = "";
+    bottomRow.appendChild(altBtn); bottomRow.appendChild(ctrlBtn);
+  } else {
+    ctrlBtn.textContent = "Ctrl"; ctrlBtn.dataset.key = "control";
+    altBtn.textContent = "Alt"; altBtn.dataset.key = "alt";
+    osText.textContent = "Win";
+    bottomRow.innerHTML = "";
+    bottomRow.appendChild(ctrlBtn); bottomRow.appendChild(altBtn);
+  }
+}
+
+// ── 툴 드롭다운 ──
+const toolData = [
+  { name: "Photoshop", icon: "2f0361160b913.png", json: "phshortcuts.json" },
+  { name: "Illustrator", icon: "1e977a9e6eb80.png", json: "aishortcuts.json" },
+  { name: "Figma", icon: "5c72e082e7de0.png", json: "figmashortcuts.json" },
+  { name: "Indesign", icon: "e6d4c565bf1f3.png", json: "idshortcuts.json" },
+  { name: "Premiere Pro", icon: "a514e6630632a.png", json: "prshortcuts.json" },
+  { name: "After Effects", icon: "354094f0ed8fd.png", json: "aeshortcuts.json" }
+];
+let currentTool = "Photoshop";
+
+function toggleToolDropdown(forceClose = false) {
+  const dropdown = document.getElementById("tool-dropdown");
+  if (forceClose) { dropdown.classList.remove("show"); return; }
+  const willOpen = !dropdown.classList.contains("show");
+  if (willOpen) { dropdown.classList.add("show"); renderToolDropdown(); }
+  else { dropdown.classList.remove("show"); }
+}
+
+document.addEventListener("click", (e) => {
+  const dropdown = document.getElementById("tool-dropdown");
+  const button = document.querySelector(".ds-tool-btn");
+  if (!dropdown.contains(e.target) && !button.contains(e.target)) toggleToolDropdown(true);
+}, true);
+
+function renderToolDropdown() {
+  const dropdown = document.getElementById("tool-dropdown");
+  dropdown.innerHTML = "";
+  const closeBtn = document.createElement("div");
+  closeBtn.className = "ds-tool-close";
+  closeBtn.innerHTML = "✕";
+  closeBtn.onclick = () => toggleToolDropdown(true);
+  dropdown.appendChild(closeBtn);
+  const iconBase = "https://cdn.imweb.me/upload/S20190713161f9b85458b3/";
+  const selectedTool = toolData.find(t => t.name === currentTool);
+  const selected = document.createElement("li");
+  selected.className = "selected";
+  selected.innerHTML = `<img src="${iconBase + selectedTool.icon}" class="ds-tool-icon" /> ${selectedTool.name}`;
+  selected.onclick = () => toggleToolDropdown(true);
+  dropdown.appendChild(selected);
+  const divider = document.createElement("div");
+  divider.className = "ds-divider";
+  dropdown.appendChild(divider);
+  toolData.forEach(tool => {
+    if (tool.name === currentTool) return;
+    const li = document.createElement("li");
+    li.innerHTML = `<img src="${iconBase + tool.icon}" class="ds-tool-icon" /> ${tool.name}`;
+    li.onclick = () => selectTool(tool.name, tool.icon, tool.json);
+    dropdown.appendChild(li);
+  });
+}
+
+function selectTool(toolName, iconFile, jsonFile) {
+  const iconPath = `https://cdn.imweb.me/upload/S20190713161f9b85458b3/${iconFile}`;
+  const jsonPath = `https://raw.githubusercontent.com/designskillslabdata/designslab/main/${jsonFile}`;
+  currentTool = toolName;
+  document.getElementById("selected-tool-name").textContent = toolName;
+  document.getElementById("selected-tool-icon").src = iconPath;
+  document.getElementById("tool-dropdown").classList.remove("show");
+  loadProblems(jsonPath);
+}
+
+function openVersionPopup() { document.getElementById("ds-version-popup").classList.remove("hidden"); }
+function closeVersionPopup() { document.getElementById("ds-version-popup").classList.add("hidden"); }
+function closeVersionPopupByBackdrop(e) { if (e.target.id === "ds-version-popup") closeVersionPopup(); }
+function toggleMobileCategories() {
+  const leftPanel = document.querySelector('.ds-left');
+  const toggleBtn = document.querySelector('.ds-tool-toggle-btn');
+  leftPanel.classList.toggle('mobile-open');
+  toggleBtn.classList.toggle('active');
+}
+
+// ── DOMContentLoaded ──
+document.addEventListener("DOMContentLoaded", () => {
+  updateKeyLabels();
+  updateProgress(0, 0);
+  loadProblems();
+
+  document.querySelectorAll('.ds-key-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.key.toLowerCase();
+      if (pressedKeys.has(key)) { pressedKeys.delete(key); btn.classList.remove("active"); }
+      else { pressedKeys.add(key); btn.classList.add("active"); }
+      checkAnswer();
+    });
+  });
+
+  // ✅ keydown: 수식키 실시간 반영 + 일반키 정답 체크
+  document.addEventListener("keydown", e => {
+    if (isInputLocked) return;
+
+    const key = e.key.toLowerCase();
+    const keyboardPanel = document.querySelector(".ds-keyboard-panel");
+
+    // F키·방향키 등 완전 차단 키
+    if (restrictedKeys.has(key)) {
+      keyboardPanel.classList.add("locked", "shake");
+      setTimeout(() => keyboardPanel.classList.remove("shake"), 300);
+      return;
+    }
+
+    // ── 수식키(Ctrl/Shift/Alt/Meta) 처리 ──
+    if (["control", "alt", "shift", "meta"].includes(key)) {
+      // Mac: Cmd(meta) → control로 매핑
+      const storeKey = (osMode === "mac" && key === "meta") ? "control"
+                     : (osMode === "mac" && key === "control") ? "meta"
+                     : key;
+      pressedKeys.add(storeKey);
+
+      // 화면 버튼 active 표시
+      const btn = document.querySelector(`.ds-key-btn[data-key='${storeKey}']`);
+      if (btn) btn.classList.add("active");
+      return; // 수식키 단독으로는 정답 체크 안 함
+    }
+
+    // ✅ Shift 조합 시 특수문자를 원래 키로 변환
+    let normalizedKey = key;
+    if (e.shiftKey) {
+      const shiftMap = {
+        '!': '1', '@': '2', '#': '3', '$': '4', '%': '5',
+        '^': '6', '&': '7', '*': '8', '(': '9', ')': '0',
+        '_': '-', '+': '=', '{': '[', '}': ']', '|': '\\',
+        ':': ';', '"': "'", '<': ',', '>': '.', '?': '/'
+      };
+      normalizedKey = shiftMap[key] || key;
+    }
+
+    // ── 일반 키 처리 ──
+    // 수식키 상태 유지하고 일반 키만 교체
+    const modifierSet = new Set(["control", "alt", "shift", "meta"]);
+    const heldModifiers = Array.from(pressedKeys).filter(k => modifierSet.has(k));
+    pressedKeys.clear();
+    heldModifiers.forEach(k => pressedKeys.add(k));
+    pressedKeys.add(normalizedKey);
+
+    document.getElementById("ds-keyboard-display").textContent = normalizedKey.toUpperCase();
+    checkAnswer();
+  });
+
+  // ✅ keyup: 수식키 떼면 버튼 해제 (정답 처리 중이 아닐 때)
+  document.addEventListener("keyup", e => {
+    const key = e.key.toLowerCase();
+    if (!["control", "alt", "shift", "meta"].includes(key)) return;
+
+    const storeKey = (osMode === "mac" && key === "meta") ? "control"
+                   : (osMode === "mac" && key === "control") ? "meta"
+                   : key;
+
+    if (!isInputLocked) {
+      pressedKeys.delete(storeKey);
+      const btn = document.querySelector(`.ds-key-btn[data-key='${storeKey}']`);
+      if (btn) btn.classList.remove("active");
+    }
+  });
+
+  document.getElementById("ds-os-mode").addEventListener("click", toggleOSMode);
+
+  // ESC로 팝업 닫기
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeVersionPopup();
+  });
+});
+</script>
+</body>
+</html>
